@@ -19,7 +19,7 @@ FitBuddy is a full-stack web application that generates personalised 7-day worko
 | Layer     | Technology                          |
 |-----------|-------------------------------------|
 | Backend   | FastAPI (Python 3.10+)              |
-| AI        | Google Gemini API (`gemini-1.5-flash`) |
+| AI        | Google Gemini API (Gemini 1.5 Pro + 1.5 Flash) |
 | Database  | SQLite + SQLAlchemy ORM             |
 | Frontend  | Jinja2 Templates + Tailwind CSS CDN |
 | Config    | python-dotenv                       |
@@ -29,15 +29,31 @@ FitBuddy is a full-stack web application that generates personalised 7-day worko
 ## Project Structure
 
 ```
-GenAI_project/
-├── main.py              # FastAPI app, API routes, Gemini integration
-├── models.py            # SQLAlchemy ORM models (User, WorkoutPlan)
-├── database.py          # Database engine, session, and base setup
-├── requirements.txt     # Python dependencies
-├── .env                 # Environment variables (API key) — not committed
+fitbuddy/
+├── requirements.txt              # Project dependencies
+│
+├── app/
+│   ├── main.py                   # FastAPI entry point
+│   ├── routes.py                 # Core route handlers
+│   ├── database.py               # SQLAlchemy models and DB logic (CRUD helpers)
+│   ├── schemas.py                # Pydantic models for validation
+│   ├── gemini_generator.py       # Gemini 1.5 Pro – workout plan generator
+│   ├── gemini_flash_generator.py # Gemini 1.5 Flash – nutrition tips
+│   ├── updated_plan.py           # Feedback-based plan updater
+│   ├── nutrition.py              # Nutrition context helpers (optional)
+│   │
+│   └── templates/
+│       ├── index.html            # User input form
+│       ├── result.html           # Workout plan, tip, feedback
+│       └── all_users.html        # Admin dashboard
+│
+├── static/
+│   └── images/
+│       └── gym-bg.jpg            # Gym-themed background (add your own)
+│
+├── .env                          # GEMINI_API_KEY (not committed)
 ├── .gitignore
-└── templates/
-    └── index.html       # Single-page frontend UI
+└── fitbuddy.db                   # SQLite database (auto-generated)
 ```
 
 ---
@@ -73,8 +89,10 @@ GEMINI_API_KEY=your_actual_gemini_api_key_here
 ### 4. Run the Application
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
+
+> **Optional:** Add your own `gym-bg.jpg` to `static/images/` for the background image on the home screen.
 
 ### 5. Open in Browser
 
@@ -85,74 +103,41 @@ Navigate to [http://127.0.0.1:8000](http://127.0.0.1:8000)
 ## API Endpoints
 
 ### `GET /`
-Serves the main frontend page.
+Serves the user input form (`index.html`).
+
+---
+
+### `GET /result/{plan_id}`
+Renders the workout plan, nutrition tip, and feedback form for plan `plan_id`.
 
 ---
 
 ### `POST /generate`
 Creates a new user profile and generates an initial 7-day workout plan.
 
-**Request Body:**
-```json
-{
-  "name": "Alex Johnson",
-  "age": 25,
-  "weight": 70.0,
-  "goal": "Weight Loss",
-  "intensity": "medium"
-}
+**Form Fields** (submitted via HTML form):
+```
+name=Alex Johnson&age=25&weight=70&goal=Weight Loss&intensity=medium
 ```
 
-**Response:**
-```json
-{
-  "plan_id": 1,
-  "user_id": 1,
-  "plan": {
-    "Day 1": { "focus": "Cardio", "exercises": [...] },
-    ...
-    "Day 7": { "focus": "Rest & Stretch", "exercises": [...] }
-  },
-  "tip": "Drink at least 2 litres of water daily to support fat metabolism."
-}
-```
+**Response:** Redirects to `GET /result/{plan_id}` (HTTP 303).
 
 ---
 
-### `POST /refine`
+### `POST /feedback`
 Refines an existing workout plan based on user feedback.
 
-**Request Body:**
-```json
-{
-  "plan_id": 1,
-  "feedback": "too hard, add more rest days"
-}
+**Form Fields:**
+```
+plan_id=1&feedback=too hard, add more rest days
 ```
 
-**Response:**
-```json
-{
-  "plan_id": 1,
-  "plan": { "Day 1": {...}, ... },
-  "tip": "..."
-}
-```
+**Response:** Redirects to `GET /result/{plan_id}` (HTTP 303).
 
 ---
 
-### `GET /tip/{goal}`
-Returns a single nutrition or recovery tip for a given fitness goal.
-
-**Example:** `GET /tip/Weight Loss`
-
-**Response:**
-```json
-{
-  "goal": "Weight Loss",
-  "tip": "Include protein in every meal to reduce hunger and preserve muscle mass."
-}
-```
+### `GET /view-all-users`
+Admin dashboard showing all registered users and their plans in an expandable table.
 
 ---
 
@@ -169,45 +154,58 @@ Returns a single nutrition or recovery tip for a given fitness goal.
 | intensity  | String  | Workout intensity (low/medium/high) |
 | created_at | DateTime| Timestamp of record creation        |
 
-### `workout_plans`
-| Column        | Type    | Description                       |
-|---------------|---------|-----------------------------------|
-| id            | Integer | Primary key                       |
-| user_id       | Integer | Foreign key → users.id            |
-| plan_json     | Text    | 7-day plan stored as JSON string  |
-| nutrition_tip | Text    | Latest tip from Gemini            |
-| created_at    | DateTime| Timestamp of creation             |
-| updated_at    | DateTime| Timestamp of last refinement      |
+### `plans`
+| Column        | Type    | Description                                      |
+|---------------|---------|--------------------------------------------------|
+| id            | Integer | Primary key                                      |
+| user_id       | Integer | Foreign key → users.id                           |
+| original_plan | Text    | Initial Gemini-generated plan (JSON string)      |
+| updated_plan  | Text    | Feedback-refined plan (JSON string, nullable)    |
+| nutrition_tip | Text    | Gemini Flash tip                                 |
+| created_at    | DateTime| Timestamp of creation                            |
+| updated_at    | DateTime| Timestamp of last refinement                     |
 
 ---
 
 ## How It Works
 
 ```
-User submits form
-       │
-       ▼
-FastAPI /generate
-       │
-       ├─→ Save User to SQLite
-       │
-       ├─→ Build prompt → Gemini API → Parse JSON plan
-       │
-       ├─→ Fetch tip → Gemini API
-       │
-       └─→ Save WorkoutPlan to SQLite → Return to frontend
+index.html  ──POST /generate──►  routes.py
+                                     │
+                                     ├─ save_user()          → SQLite users
+                                     ├─ generate_workout_gemini()   (Gemini 1.5 Pro)
+                                     ├─ generate_nutrition_tip_with_flash()  (Gemini 1.5 Flash)
+                                     └─ save_plan()          → SQLite plans
+                                              │
+                                              ▼
+                                    redirect → /result/{plan_id}
+                                              │
+                                              ▼
+                                        result.html
+                                              │
+                              POST /feedback (feedback text)
+                                              │
+                                     update_workout_plan()   (Gemini 1.5 Pro)
+                                              │
+                                     update_plan()           → SQLite plans.updated_plan
+                                              │
+                                    redirect → /result/{plan_id}
 
-User submits feedback
-       │
-       ▼
-FastAPI /refine
-       │
-       ├─→ Load existing plan from DB
-       │
-       ├─→ Build refined prompt → Gemini API → Parse updated JSON
-       │
-       └─→ Update WorkoutPlan in DB → Return to frontend
+/view-all-users  ──►  get_all_users()  ──►  all_users.html
 ```
+
+## Module Responsibilities
+
+| Module | Responsibility |
+|--------|----------------|
+| `app/main.py` | App factory, lifespan, static mounting, router registration |
+| `app/routes.py` | All HTTP route handlers, template rendering |
+| `app/database.py` | ORM models (`User`, `Plan`), engine setup, CRUD helpers |
+| `app/schemas.py` | Pydantic request/response validation models |
+| `app/gemini_generator.py` | `generate_workout_gemini()` via Gemini 1.5 Pro |
+| `app/gemini_flash_generator.py` | `generate_nutrition_tip_with_flash()` via Gemini 1.5 Flash |
+| `app/updated_plan.py` | `update_workout_plan()` – feedback-based refinement |
+| `app/nutrition.py` | Macro/food context helpers for enriching prompts |
 
 ---
 

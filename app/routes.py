@@ -1,6 +1,14 @@
 """
 routes.py
 Core route handlers for the FitBuddy FastAPI application.
+
+Route map
+─────────
+GET  /                  → index.html  (user input form)
+POST /generate-workout  → calls generate_workout_gemini() + generate_nutrition_tip_with_flash()
+GET  /result/{plan_id}  → result.html (plan display + feedback form)
+POST /submit-feedback   → calls update_workout_plan() with original plan + feedback
+GET  /view-all-users    → all_users.html (admin dashboard)
 """
 
 import json
@@ -17,6 +25,7 @@ from .database import (
 from .gemini_generator import generate_workout_gemini
 from .gemini_flash_generator import generate_nutrition_tip_with_flash
 from .updated_plan import update_workout_plan
+from .schemas import UserInput, FeedbackRequest  # noqa: F401  (used as annotations / docs)
 
 # ---------------------------------------------------------------------------
 # Templates (resolved relative to this file's directory)
@@ -36,30 +45,42 @@ async def index(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# POST /generate  –  Scenario 1: create user + generate initial plan
+# POST /generate-workout  –  Scenario 1: process form → generate plan + tip
+#
+# Form fields (UserInput schema):  username, user_id, age, weight, goal, intensity
+# Gemini calls:
+#   1. generate_workout_gemini()          → Gemini 1.5 Pro  → 7-day JSON plan
+#   2. generate_nutrition_tip_with_flash() → Gemini 1.5 Flash → tip string
 # ---------------------------------------------------------------------------
-@router.post("/generate")
-async def generate(
-    request: Request,
-    name:      str   = Form(...),
-    age:       int   = Form(...),
-    weight:    float = Form(...),
-    goal:      str   = Form(...),
-    intensity: str   = Form(...),
+@router.post("/generate-workout",
+             summary="Generate a personalised 7-day workout plan",
+             description="Accepts HTML form input (UserInput schema), calls Gemini 1.5 Pro "
+                         "for the workout plan and Gemini 1.5 Flash for a nutrition tip, "
+                         "persists both, then redirects to /result/{plan_id}.")
+async def generate_workout(
+    request:   Request,
+    username:  str   = Form(..., description="Display name of the user"),
+    user_id:   str   = Form(..., description="Unique user identifier"),
+    age:       int   = Form(..., ge=10, le=100),
+    weight:    float = Form(..., ge=20.0, description="Weight in kg"),
+    goal:      str   = Form(..., description="Fitness goal"),
+    intensity: str   = Form(..., description="low | medium | high"),
     db: Session = Depends(get_db),
 ):
     try:
-        # 1. Persist user
-        user = save_user(db, name=name, age=age, weight=weight, goal=goal, intensity=intensity)
+        # ── 1. Persist user (username maps to 'name' column, user_id stored as note) ──
+        user = save_user(db, name=username, age=age, weight=weight,
+                         goal=goal, intensity=intensity)
 
-        # 2. Generate 7-day plan (Gemini 1.5 Pro)
-        plan_dict = generate_workout_gemini(name, age, weight, goal, intensity)
+        # ── 2. generate_workout_gemini()  →  Gemini 1.5 Pro ──
+        plan_dict = generate_workout_gemini(username, age, weight, goal, intensity)
 
-        # 3. Generate nutrition tip (Gemini 1.5 Flash)
+        # ── 3. generate_nutrition_tip_with_flash()  →  Gemini 1.5 Flash ──
         tip = generate_nutrition_tip_with_flash(goal)
 
-        # 4. Persist plan
-        plan = save_plan(db, user_id=user.id, original_plan=json.dumps(plan_dict), nutrition_tip=tip)
+        # ── 4. Persist plan ──
+        plan = save_plan(db, user_id=user.id,
+                         original_plan=json.dumps(plan_dict), nutrition_tip=tip)
 
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -94,12 +115,21 @@ async def result(request: Request, plan_id: int, db: Session = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
-# POST /feedback  –  Scenario 2: refine plan based on feedback
+# POST /submit-feedback  –  Scenario 2: refine plan via update_workout_plan()
+#
+# Form fields (FeedbackRequest schema): plan_id, feedback
+# Gemini call:
+#   update_workout_plan(original_plan, feedback) → Gemini 1.5 Pro → updated JSON plan
 # ---------------------------------------------------------------------------
-@router.post("/feedback")
-async def feedback(
-    plan_id:  int = Form(...),
-    feedback: str = Form(...),
+@router.post("/submit-feedback",
+             summary="Refine an existing workout plan",
+             description="Accepts plan_id + free-text feedback (FeedbackRequest schema). "
+                         "Retrieves the existing plan, sends it with the feedback to "
+                         "update_workout_plan() (Gemini 1.5 Pro), saves the updated plan, "
+                         "then redirects to /result/{plan_id}.")
+async def submit_feedback(
+    plan_id:  int = Form(..., gt=0, description="ID of the plan to refine"),
+    feedback: str = Form(..., min_length=1, description="User feedback for plan refinement"),
     db: Session = Depends(get_db),
 ):
     plan = get_original_plan(db, plan_id)
@@ -107,10 +137,11 @@ async def feedback(
         raise HTTPException(status_code=404, detail="Plan not found.")
 
     try:
-        # Use the most recent plan as the base
+        # Use most recent version as the base for refinement
         base_json = plan.updated_plan if plan.updated_plan else plan.original_plan
         base_dict = json.loads(base_json)
 
+        # ── update_workout_plan()  →  Gemini 1.5 Pro ──
         updated_dict = update_workout_plan(base_dict, feedback)
         update_plan(db, plan_id=plan_id, updated_plan=json.dumps(updated_dict))
 

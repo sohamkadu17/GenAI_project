@@ -5,12 +5,13 @@ Refines an existing workout plan based on user feedback using Gemini 1.5 Pro.
 
 import json
 import re
-import google.generativeai as genai
+from google import genai
+import os
+from dotenv import load_dotenv
 
-# Re-use the already-configured Pro model instance from gemini_generator.
-# genai.configure() is idempotent — calling it once in gemini_generator.py
-# is sufficient for the entire process.
-_pro_model = genai.GenerativeModel("gemini-1.5-pro")
+load_dotenv()
+_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+_PRO_MODEL = "gemini-1.5-pro"
 
 
 def _extract_json(text: str) -> dict:
@@ -51,7 +52,7 @@ same structure (Day 1 … Day 7, each with focus, warmup, exercises, cooldown).
 No extra commentary, no markdown, just the JSON object.
 """
     try:
-        response = _pro_model.generate_content(prompt)
+        response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
         return _extract_json(response.text)
     except ValueError as exc:
         raise RuntimeError(f"Failed to parse updated plan JSON: {exc}") from exc

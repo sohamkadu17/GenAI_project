@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitBuddy – Your Plan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #1a1a2e 100%);
+      min-height: 100vh;
+    }
+    .glass {
+      background: rgba(20, 20, 40, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #818cf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .day-colors { --c1: rgba(129,140,248,0.15); --c2: rgba(129,140,248,0.3); }
+    .day-card { transition: transform .2s, box-shadow .2s; }
+    .day-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+    .input-field {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: .75rem;
+      padding: .6rem 1rem;
+      color: #e2e8f0;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .input-field:focus { border-color: #818cf8; }
+    .spinner {
+      width:18px; height:18px;
+      border: 2px solid rgba(255,255,255,.2);
+      border-top-color: #34d399;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Day card gradient palette */
+    .day-0 { background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(139,92,246,.1)); border-color: rgba(99,102,241,.35); }
+    .day-1 { background: linear-gradient(135deg, rgba(16,185,129,.2), rgba(52,211,153,.1)); border-color: rgba(16,185,129,.35); }
+    .day-2 { background: linear-gradient(135deg, rgba(245,158,11,.2), rgba(251,191,36,.1)); border-color: rgba(245,158,11,.35); }
+    .day-3 { background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(252,165,165,.1)); border-color: rgba(239,68,68,.35); }
+    .day-4 { background: linear-gradient(135deg, rgba(14,165,233,.2), rgba(56,189,248,.1)); border-color: rgba(14,165,233,.35); }
+    .day-5 { background: linear-gradient(135deg, rgba(217,70,239,.2), rgba(232,121,249,.1)); border-color: rgba(217,70,239,.35); }
+    .day-6 { background: linear-gradient(135deg, rgba(132,204,22,.2), rgba(163,230,53,.1)); border-color: rgba(132,204,22,.35); }
+  </style>
+</head>
+<body class="text-gray-100 font-sans pb-20">
+
+  <!-- ── HEADER ── -->
+  <header class="sticky top-0 z-50 backdrop-blur bg-black/40 border-b border-white/10 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 font-bold text-lg gradient-text">
+        💪 FitBuddy
+      </a>
+      <div class="flex items-center gap-4 text-sm text-gray-400">
+        {% if is_updated %}
+          <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-semibold">✓ Plan Updated</span>
+        {% endif %}
+        <span>Plan <span class="font-mono text-indigo-400">#{{ plan_id }}</span></span>
+        <a href="/view-all-users" class="text-indigo-400 hover:underline">Admin →</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+
+    <!-- ── USER BANNER ── -->
+    <div class="glass rounded-2xl px-6 py-5 flex flex-wrap gap-6 items-center">
+      <div class="w-14 h-14 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-2xl">
+        🏋️
+      </div>
+      <div>
+        <p class="text-xl font-bold">{{ user.name }}</p>
+        <p class="text-sm text-gray-400">{{ user.age }} yrs · {{ user.weight }} kg · <span class="capitalize">{{ user.intensity }}</span> intensity</p>
+      </div>
+      <div class="ml-auto">
+        <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-sm font-semibold">
+          🎯 {{ user.goal }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ── NUTRITION TIP ── -->
+    {% if tip %}
+    <div class="glass rounded-2xl px-6 py-4 flex items-start gap-4 border border-emerald-500/20">
+      <span class="text-2xl mt-0.5">🥗</span>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-1">Nutrition &amp; Recovery Tip</p>
+        <p class="text-gray-200">{{ tip }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── 7-DAY PLAN GRID ── -->
+    <section>
+      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+        📅 Your
+        {% if is_updated %}<span class="text-emerald-400">Updated</span>{% endif %}
+        7-Day Plan
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {% set colors = ['day-0','day-1','day-2','day-3','day-4','day-5','day-6'] %}
+        {% for day, details in plan.items() %}
+        <div class="day-card border rounded-2xl p-5 space-y-4 {{ colors[loop.index0 % 7] }}">
+
+          <!-- Day header -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase tracking-widest text-gray-400 font-semibold">{{ day }}</span>
+            <span class="text-xs bg-white/10 px-2.5 py-0.5 rounded-full">{{ details.focus | default('Rest') }}</span>
+          </div>
+
+          <!-- Warm-up -->
+          {% if details.warmup %}
+          <div>
+            <p class="text-xs text-yellow-400 font-semibold uppercase tracking-wide mb-1">🔆 Warm-up</p>
+            <p class="text-xs text-gray-300">{{ details.warmup }}</p>
+          </div>
+          {% endif %}
+
+          <!-- Exercises -->
+          {% if details.exercises %}
+          <div>
+            <p class="text-xs text-indigo-300 font-semibold uppercase tracking-wide mb-2">💪 Exercises</p>
+            <ul class="space-y-1.5">
+              {% for ex in details.exercises %}
+              <li class="flex items-start gap-2 text-sm">
+                <span class="text-emerald-400 mt-0.5 shrink-0">▸</span>
+                <span>
+                  <span class="font-medium text-white">{{ ex.name }}</span>
+                  <span class="text-gray-400"> — {{ ex.sets }} × {{ ex.reps }}</span>
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <p class="text-sm text-gray-400 italic">Rest day 🛌</p>
+          {% endif %}
+
+          <!-- Cooldown -->
+          {% if details.cooldown %}
+          <div class="border-t border-white/10 pt-3">
+            <p class="text-xs text-blue-400 font-semibold uppercase tracking-wide mb-1">❄️ Cooldown</p>
+            <p class="text-xs text-gray-300">{{ details.cooldown }}</p>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- ── FEEDBACK / REFINE ── -->
+    <section class="glass rounded-2xl p-8 space-y-5 border border-white/10">
+      <div>
+        <h3 class="text-xl font-bold flex items-center gap-2">✏️ Refine Your Plan</h3>
+        <p class="text-sm text-gray-400 mt-1">Not happy with something? Tell FitBuddy and it will update your plan.</p>
+      </div>
+
+      <form action="/submit-feedback" method="post" id="feedbackForm" class="space-y-4">
+        <input type="hidden" name="plan_id" value="{{ plan_id }}" />
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input name="feedback" type="text" required
+            placeholder='e.g. "Add yoga on Day 3", "Too hard, reduce intensity"'
+            class="input-field flex-1" />
+          <button type="submit" id="refineBtn"
+            class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2.5
+                   rounded-xl transition flex items-center justify-center gap-2 whitespace-nowrap">
+            <span id="refineBtnLabel">Refine Plan 🔄</span>
+            <span id="refineSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+
+      <p class="text-sm text-gray-500">
+        💡 Tip: You can chain multiple requests — each refinement builds on the previous one.
+      </p>
+    </section>
+
+    <!-- ── BACK LINK ── -->
+    <div class="text-center">
+      <a href="/" class="text-indigo-400 hover:underline text-sm">← Create a new plan</a>
+    </div>
+
+  </main>
+
+  <script>
+    document.getElementById('feedbackForm').addEventListener('submit', function () {
+      document.getElementById('refineBtnLabel').textContent = 'Refining…';
+      document.getElementById('refineSpinner').classList.remove('hidden');
+      document.getElementById('refineBtn').disabled = true;
+    });
+  </script>
+</body>
+</html>

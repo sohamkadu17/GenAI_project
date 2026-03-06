@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitBuddy – Start Your Journey</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      min-height: 100vh;
+      background: url('/static/images/gym-bg.jpg') center/cover no-repeat fixed,
+                  linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      background-blend-mode: overlay;
+    }
+    .glass {
+      background: rgba(15, 15, 30, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #818cf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .input-field {
+      @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-gray-100
+             placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1
+             focus:ring-indigo-500 transition;
+    }
+    .pill {
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      transition: all .2s;
+      user-select: none;
+    }
+    .pill.selected {
+      border-color: #818cf8;
+      background: rgba(129,140,248,0.18);
+      color: #c7d2fe;
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="flex items-center justify-center py-16 px-4 font-sans text-gray-100">
+
+  <div class="w-full max-w-xl space-y-8">
+
+    <!-- Header -->
+    <div class="text-center space-y-2">
+      <div class="text-5xl">💪</div>
+      <h1 class="text-4xl font-extrabold gradient-text">FitBuddy</h1>
+      <p class="text-gray-400">AI-powered personal trainer — get your 7-day plan in seconds.</p>
+    </div>
+
+    <!-- Form card -->
+    <div class="glass rounded-2xl p-8 shadow-2xl">
+      <h2 class="text-lg font-semibold mb-6 text-gray-200">Tell us about yourself</h2>
+
+      <form action="/generate-workout" method="post" id="genForm" class="space-y-5">
+
+        <!-- Username -->
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Full Name</label>
+          <input name="username" type="text" required placeholder="e.g. Alex Johnson"
+            class="input-field" />
+        </div>
+
+        <!-- User ID -->
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">User ID
+            <span class="text-gray-600 text-xs">(unique identifier)</span>
+          </label>
+          <input name="user_id" type="text" required placeholder="e.g. alex_42 or U-00123"
+            class="input-field" />
+        </div>
+
+        <!-- Age & Weight -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-sm text-gray-400">Age</label>
+            <input name="age" type="number" required min="10" max="100" placeholder="25"
+              class="input-field" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-gray-400">Weight (kg)</label>
+            <input name="weight" type="number" step="0.1" required min="30" placeholder="70"
+              class="input-field" />
+          </div>
+        </div>
+
+        <!-- Goal -->
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Fitness Goal</label>
+          <select name="goal" required class="input-field bg-[#0f0f1e]">
+            <option value="" disabled selected>Select your goal…</option>
+            <option value="Weight Loss">🔥 Weight Loss</option>
+            <option value="Muscle Gain">💪 Muscle Gain</option>
+            <option value="Improve Endurance">🏃 Improve Endurance</option>
+            <option value="General Fitness">⚡ General Fitness</option>
+            <option value="Flexibility & Mobility">🧘 Flexibility &amp; Mobility</option>
+          </select>
+        </div>
+
+        <!-- Intensity -->
+        <div class="space-y-2">
+          <label class="text-sm text-gray-400">Training Intensity</label>
+          <div class="flex gap-3 flex-wrap" id="intensityGroup">
+            <label class="pill" data-val="low">
+              <input type="radio" name="intensity" value="low" class="hidden" required />
+              🐢 Low
+            </label>
+            <label class="pill" data-val="medium">
+              <input type="radio" name="intensity" value="medium" class="hidden" />
+              🚶 Medium
+            </label>
+            <label class="pill" data-val="high">
+              <input type="radio" name="intensity" value="high" class="hidden" />
+              🔥 High
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="submitBtn"
+          class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold
+                 py-3 rounded-xl transition flex items-center justify-center gap-3">
+          <span id="btnLabel">Generate My Plan ✨</span>
+          <span id="btnSpinner" class="spinner hidden"></span>
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Admin link -->
+    <p class="text-center text-sm text-gray-600">
+      Admin? <a href="/view-all-users" class="text-indigo-400 hover:underline">View all users →</a>
+    </p>
+
+  </div>
+
+  <script>
+    // Intensity pill toggle
+    document.querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+        pill.querySelector('input').checked = true;
+      });
+    });
+
+    // Loading state on submit
+    document.getElementById('genForm').addEventListener('submit', function(e) {
+      const intensity = document.querySelector('input[name="intensity"]:checked');
+      if (!intensity) {
+        e.preventDefault();
+        alert('Please select a training intensity.');
+        return;
+      }
+      document.getElementById('btnLabel').textContent = 'Generating…';
+      document.getElementById('btnSpinner').classList.remove('hidden');
+      document.getElementById('submitBtn').disabled = true;
+    });
+  </script>
+</body>
+</html>

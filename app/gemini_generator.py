@@ -7,7 +7,7 @@ import os
 import json
 import re
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 
 load_dotenv()
 
@@ -15,8 +15,8 @@ _api_key = os.getenv("GEMINI_API_KEY")
 if not _api_key:
     raise EnvironmentError("GEMINI_API_KEY is not set in the .env file.")
 
-genai.configure(api_key=_api_key)
-_pro_model = genai.GenerativeModel("gemini-1.5-pro")
+_client = genai.Client(api_key=_api_key)
+_PRO_MODEL = "gemini-1.5-pro"
 
 
 def _extract_json(text: str) -> dict:
@@ -73,7 +73,7 @@ Ensure the plan is realistic, progressive, and appropriate for the given intensi
 Rest days should still include light activity or stretching.
 """
     try:
-        response = _pro_model.generate_content(prompt)
+        response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
         return _extract_json(response.text)
     except ValueError as exc:
         raise RuntimeError(f"Failed to parse workout plan JSON: {exc}") from exc

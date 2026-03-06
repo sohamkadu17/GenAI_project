@@ -5,7 +5,7 @@ Generates a concise nutrition or recovery tip using Gemini 1.5 Flash.
 
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 
 load_dotenv()
 
@@ -13,8 +13,8 @@ _api_key = os.getenv("GEMINI_API_KEY")
 if not _api_key:
     raise EnvironmentError("GEMINI_API_KEY is not set in the .env file.")
 
-genai.configure(api_key=_api_key)
-_flash_model = genai.GenerativeModel("gemini-1.5-flash")
+_client = genai.Client(api_key=_api_key)
+_FLASH_MODEL = "gemini-1.5-flash"
 
 
 def generate_nutrition_tip_with_flash(goal: str) -> str:
@@ -34,7 +34,7 @@ post-workout recovery. Return only the tip sentence — no labels, no bullet
 points, no extra text.
 """
     try:
-        response = _flash_model.generate_content(prompt)
+        response = _client.models.generate_content(model=_FLASH_MODEL, contents=prompt)
         return response.text.strip()
     except Exception as exc:
         raise RuntimeError(f"Gemini Flash error during tip generation: {exc}") from exc

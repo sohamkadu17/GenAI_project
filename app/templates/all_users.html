@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitBuddy – Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f0f1e; min-height: 100vh; }
+    .glass {
+      background: rgba(20, 20, 40, 0.80);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #818cf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] summary .arrow { transform: rotate(90deg); }
+    .arrow { transition: transform .2s; display: inline-block; }
+  </style>
+</head>
+<body class="text-gray-100 font-sans pb-20">
+
+  <!-- ── HEADER ── -->
+  <header class="sticky top-0 z-50 backdrop-blur bg-black/50 border-b border-white/10 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 font-bold text-lg gradient-text">
+        💪 FitBuddy
+      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-400">🔐 Admin Dashboard</span>
+        <a href="/" class="text-sm text-indigo-400 hover:underline">← New Plan</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-10 space-y-8">
+
+    <!-- ── PAGE TITLE ── -->
+    <div class="flex items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold gradient-text">All Users</h1>
+        <p class="text-gray-400 mt-1">
+          {{ users_data | length }} registered user{{ 's' if users_data | length != 1 else '' }}
+        </p>
+      </div>
+    </div>
+
+    {% if not users_data %}
+      <div class="glass rounded-2xl p-10 text-center text-gray-500">
+        <p class="text-4xl mb-3">🏋️</p>
+        <p class="text-lg">No users yet. <a href="/" class="text-indigo-400 hover:underline">Create the first plan →</a></p>
+      </div>
+    {% endif %}
+
+    {% for entry in users_data %}
+    {% set user = entry.user %}
+    <div class="glass rounded-2xl overflow-hidden">
+
+      <!-- User header row -->
+      <div class="flex flex-wrap items-center gap-4 px-6 py-5 bg-white/5 border-b border-white/10">
+        <div class="w-12 h-12 rounded-full bg-indigo-600/30 border border-indigo-500/30
+                    flex items-center justify-center text-xl font-bold text-indigo-300">
+          {{ user.name[0] | upper }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-lg text-white truncate">{{ user.name }}</p>
+          <p class="text-sm text-gray-400">
+            {{ user.age }} yrs · {{ user.weight }} kg ·
+            <span class="capitalize">{{ user.intensity }}</span> intensity ·
+            🎯 {{ user.goal }}
+          </p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="text-xs text-gray-500 font-mono">ID #{{ user.id }}</span>
+          <span class="text-xs text-gray-500">
+            Joined {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
+          </span>
+          <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300
+                       px-3 py-1 rounded-full text-xs font-semibold">
+            {{ entry.plans | length }} Plan{{ 's' if entry.plans | length != 1 else '' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Plans for this user -->
+      {% if not entry.plans %}
+        <p class="px-6 py-4 text-sm text-gray-500 italic">No plans generated.</p>
+      {% endif %}
+
+      {% for plan_entry in entry.plans %}
+      <details class="border-b border-white/5 last:border-0">
+        <summary class="flex items-center gap-3 px-6 py-4 cursor-pointer hover:bg-white/5 transition select-none">
+          <span class="arrow text-gray-500 text-xs">▶</span>
+          <span class="font-medium text-gray-200">Plan #{{ plan_entry.id }}</span>
+          {% if plan_entry.is_updated %}
+            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
+                         px-2.5 py-0.5 rounded-full text-xs font-semibold">Updated</span>
+          {% else %}
+            <span class="bg-gray-500/20 text-gray-400 border border-gray-500/30
+                         px-2.5 py-0.5 rounded-full text-xs">Original</span>
+          {% endif %}
+          <span class="ml-auto text-xs text-gray-500 font-mono">
+            {{ plan_entry.created_at.strftime('%d %b %Y, %H:%M') if plan_entry.created_at else '' }}
+          </span>
+          <a href="/result/{{ plan_entry.id }}"
+             class="text-indigo-400 hover:underline text-xs ml-4 whitespace-nowrap"
+             onclick="event.stopPropagation()">
+            View full plan →
+          </a>
+        </summary>
+
+        <div class="px-6 pb-6 space-y-5">
+
+          <!-- Nutrition tip -->
+          {% if plan_entry.tip %}
+          <div class="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20
+                      rounded-xl px-4 py-3 mt-3">
+            <span>🥗</span>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-0.5">Nutrition Tip</p>
+              <p class="text-sm text-gray-300">{{ plan_entry.tip }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Plan table -->
+          <div class="overflow-x-auto rounded-xl border border-white/10">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-white/5 text-gray-400 text-xs uppercase tracking-wide">
+                  <th class="text-left px-4 py-3 whitespace-nowrap">Day</th>
+                  <th class="text-left px-4 py-3 whitespace-nowrap">Focus</th>
+                  <th class="text-left px-4 py-3">Warm-up</th>
+                  <th class="text-left px-4 py-3">Exercises</th>
+                  <th class="text-left px-4 py-3">Cooldown</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for day, details in plan_entry.plan.items() %}
+                <tr class="hover:bg-white/5 transition">
+                  <td class="px-4 py-3 font-semibold text-indigo-300 whitespace-nowrap">{{ day }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="bg-white/10 px-2.5 py-0.5 rounded-full text-xs">
+                      {{ details.focus | default('—') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-400 text-xs max-w-[160px]">
+                    {{ details.warmup | default('—') }}
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if details.exercises %}
+                    <ul class="space-y-0.5">
+                      {% for ex in details.exercises %}
+                      <li class="text-xs">
+                        <span class="text-white font-medium">{{ ex.name }}</span>
+                        <span class="text-gray-500"> · {{ ex.sets }}×{{ ex.reps }}</span>
+                      </li>
+                      {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-gray-500 text-xs italic">Rest day</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3 text-gray-400 text-xs max-w-[160px]">
+                    {{ details.cooldown | default('—') }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </details>
+      {% endfor %}
+
+    </div>
+    {% endfor %}
+
+  </main>
+</body>
+</html>

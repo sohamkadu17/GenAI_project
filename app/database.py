@@ -22,6 +22,7 @@ class User(Base):
     __tablename__ = "users"
 
     id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(String(50), nullable=True, index=True)  # unique identifier from form
     name       = Column(String(100), nullable=False)
     age        = Column(Integer, nullable=False)
     weight     = Column(Float, nullable=False)
@@ -64,8 +65,10 @@ def init_db():
 # ---------------------------------------------------------------------------
 # CRUD helpers
 # ---------------------------------------------------------------------------
-def save_user(db, name: str, age: int, weight: float, goal: str, intensity: str) -> User:
-    user = User(name=name, age=age, weight=weight, goal=goal, intensity=intensity)
+def save_user(db, name: str, age: int, weight: float, goal: str,
+              intensity: str, user_id: str = None) -> User:
+    user = User(name=name, age=age, weight=weight, goal=goal,
+                intensity=intensity, user_id=user_id)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -101,3 +104,8 @@ def get_user(db, user_id: int) -> User:
 
 def get_all_users(db):
     return db.query(User).order_by(User.created_at.desc()).all()
+
+
+def get_all_plans(db):
+    """Return every plan ordered newest-first, with user eagerly loaded."""
+    return db.query(Plan).order_by(Plan.created_at.desc()).all()
