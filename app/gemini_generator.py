@@ -6,6 +6,7 @@ Generates a personalised 7-day workout plan using Gemini 1.5 Pro.
 import os
 import json
 import re
+import time
 from dotenv import load_dotenv
 from google import genai
 
@@ -16,7 +17,10 @@ if not _api_key:
     raise EnvironmentError("GEMINI_API_KEY is not set in the .env file.")
 
 _client = genai.Client(api_key=_api_key)
-_PRO_MODEL = "gemini-2.0-flash"
+_PRO_MODEL = "gemini-2.0-flash-lite"  # highest free-tier quota
+
+_MAX_RETRIES = 3
+_RETRY_DELAYS = [5, 15, 30]  # seconds between retries on 429
 
 
 def _extract_json(text: str) -> dict:
@@ -72,10 +76,17 @@ Return ONLY valid JSON — no extra text, no markdown — using exactly this str
 Ensure the plan is realistic, progressive, and appropriate for the given intensity.
 Rest days should still include light activity or stretching.
 """
-    try:
-        response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
-        return _extract_json(response.text)
-    except ValueError as exc:
-        raise RuntimeError(f"Failed to parse workout plan JSON: {exc}") from exc
-    except Exception as exc:
-        raise RuntimeError(f"Gemini Pro error during plan generation: {exc}") from exc
+    last_exc = None
+    for attempt, delay in enumerate((*_RETRY_DELAYS, None), start=1):
+        try:
+            response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
+            return _extract_json(response.text)
+        except ValueError as exc:
+            raise RuntimeError(f"Failed to parse workout plan JSON: {exc}") from exc
+        except Exception as exc:
+            last_exc = exc
+            if "429" in str(exc) and delay is not None:
+                time.sleep(delay)
+                continue
+            raise RuntimeError(f"Gemini Pro error during plan generation: {exc}") from exc
+    raise RuntimeError(f"Gemini Pro error during plan generation: {last_exc}") from last_exc

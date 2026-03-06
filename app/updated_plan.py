@@ -4,14 +4,16 @@ Refines an existing workout plan based on user feedback using Gemini 1.5 Pro.
 """
 
 import json
-import re
-from google import genai
 import os
+import re
+import time
 from dotenv import load_dotenv
+from google import genai
 
 load_dotenv()
 _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-_PRO_MODEL = "gemini-2.0-flash"
+_PRO_MODEL = "gemini-2.0-flash-lite"  # highest free-tier quota
+_RETRY_DELAYS = [5, 15, 30]
 
 
 def _extract_json(text: str) -> dict:
@@ -51,10 +53,17 @@ Update the plan to incorporate the feedback. Return ONLY valid JSON with the
 same structure (Day 1 … Day 7, each with focus, warmup, exercises, cooldown).
 No extra commentary, no markdown, just the JSON object.
 """
-    try:
-        response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
-        return _extract_json(response.text)
-    except ValueError as exc:
-        raise RuntimeError(f"Failed to parse updated plan JSON: {exc}") from exc
-    except Exception as exc:
-        raise RuntimeError(f"Gemini Pro error during plan update: {exc}") from exc
+    last_exc = None
+    for delay in (*_RETRY_DELAYS, None):
+        try:
+            response = _client.models.generate_content(model=_PRO_MODEL, contents=prompt)
+            return _extract_json(response.text)
+        except ValueError as exc:
+            raise RuntimeError(f"Failed to parse updated plan JSON: {exc}") from exc
+        except Exception as exc:
+            last_exc = exc
+            if "429" in str(exc) and delay is not None:
+                time.sleep(delay)
+                continue
+            raise RuntimeError(f"Gemini Pro error during plan update: {exc}") from exc
+    raise RuntimeError(f"Gemini Pro error during plan update: {last_exc}") from last_exc
