@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitBuddy – AI Fitness Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:  { DEFAULT: '#6366f1', dark: '#4f46e5' },
+            accent:   { DEFAULT: '#10b981', dark: '#059669' },
+            surface:  '#1e1e2e',
+            card:     '#27273a',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #12121f; }
+    .gradient-text {
+      background: linear-gradient(90deg, #6366f1, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .day-card:hover { transform: translateY(-3px); transition: transform .2s; }
+    .spinner {
+      border: 3px solid rgba(255,255,255,.2);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen text-gray-100 font-sans">
+
+  <!-- ====== HEADER ====== -->
+  <header class="sticky top-0 z-50 backdrop-blur bg-black/40 border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-lg">💪</div>
+      <span class="text-xl font-bold gradient-text">FitBuddy</span>
+      <span class="ml-auto text-sm text-gray-400">AI-Powered Fitness Planner</span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+
+    <!-- ====== HERO ====== -->
+    <section class="text-center space-y-3">
+      <h1 class="text-4xl md:text-5xl font-extrabold gradient-text">Your Personal AI Trainer</h1>
+      <p class="text-gray-400 max-w-xl mx-auto">Fill in your details and FitBuddy will craft a personalised 7-day workout plan powered by Google Gemini.</p>
+    </section>
+
+    <!-- ====== GENERATE FORM ====== -->
+    <section class="bg-card rounded-2xl p-8 border border-white/10 shadow-xl">
+      <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">🏋️ Create Your Plan</h2>
+      <form id="generateForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Full Name</label>
+          <input id="f-name" type="text" placeholder="Alex Johnson" required
+            class="w-full bg-surface border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Age</label>
+          <input id="f-age" type="number" min="10" max="100" placeholder="25" required
+            class="w-full bg-surface border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Weight (kg)</label>
+          <input id="f-weight" type="number" step="0.1" min="30" placeholder="70" required
+            class="w-full bg-surface border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm text-gray-400">Fitness Goal</label>
+          <select id="f-goal" required
+            class="w-full bg-surface border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+            <option value="">Select a goal…</option>
+            <option value="Weight Loss">Weight Loss</option>
+            <option value="Muscle Gain">Muscle Gain</option>
+            <option value="Improve Endurance">Improve Endurance</option>
+            <option value="General Fitness">General Fitness</option>
+            <option value="Flexibility & Mobility">Flexibility & Mobility</option>
+          </select>
+        </div>
+
+        <div class="space-y-1 md:col-span-2">
+          <label class="text-sm text-gray-400">Intensity</label>
+          <div class="flex gap-3 flex-wrap" id="intensityGroup">
+            <label class="intensity-btn cursor-pointer flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-surface hover:border-primary transition" data-value="low">
+              <input type="radio" name="intensity" value="low" class="hidden" required /> 🐢 Low
+            </label>
+            <label class="intensity-btn cursor-pointer flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-surface hover:border-primary transition" data-value="medium">
+              <input type="radio" name="intensity" value="medium" class="hidden" /> 🚶 Medium
+            </label>
+            <label class="intensity-btn cursor-pointer flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-surface hover:border-primary transition" data-value="high">
+              <input type="radio" name="intensity" value="high" class="hidden" /> 🔥 High
+            </label>
+          </div>
+        </div>
+
+        <div class="md:col-span-2">
+          <button type="submit" id="generateBtn"
+            class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2">
+            <span id="generateBtnText">Generate My Plan ✨</span>
+            <span id="generateSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <p id="generateError" class="md:col-span-2 text-red-400 text-sm hidden"></p>
+      </form>
+    </section>
+
+    <!-- ====== PLAN DISPLAY ====== -->
+    <section id="planSection" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 class="text-xl font-semibold flex items-center gap-2">📅 Your 7-Day Plan</h2>
+        <div class="flex items-center gap-2 text-sm text-gray-400">
+          Plan ID: <span id="planIdBadge" class="bg-primary/20 text-primary px-3 py-1 rounded-full font-mono font-bold"></span>
+        </div>
+      </div>
+
+      <!-- Tip Banner -->
+      <div id="tipBanner" class="hidden bg-accent/10 border border-accent/30 rounded-xl px-5 py-4 flex items-start gap-3">
+        <span class="text-2xl mt-0.5">🥗</span>
+        <div>
+          <p class="text-xs uppercase tracking-widest text-accent font-semibold mb-1">Nutrition / Recovery Tip</p>
+          <p id="tipText" class="text-gray-200"></p>
+        </div>
+        <button onclick="refreshTip()" title="Get a new tip"
+          class="ml-auto text-accent hover:text-white transition text-lg shrink-0">↺</button>
+      </div>
+
+      <!-- Day cards grid -->
+      <div id="planGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+      <!-- ====== REFINE FORM ====== -->
+      <div class="bg-card rounded-2xl p-6 border border-white/10 shadow-md space-y-4">
+        <h3 class="font-semibold text-lg flex items-center gap-2">✏️ Refine Your Plan</h3>
+        <p class="text-sm text-gray-400">Not happy with the plan? Tell FitBuddy what to change.</p>
+        <div class="flex gap-3 flex-col sm:flex-row">
+          <input id="feedbackInput" type="text" placeholder="e.g. more cardio, too hard, add stretching…"
+            class="flex-1 bg-surface border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+          <button onclick="refinePlan()" id="refineBtn"
+            class="bg-accent hover:bg-accent-dark text-white font-semibold px-6 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap">
+            <span id="refineBtnText">Refine 🔄</span>
+            <span id="refineSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+        <p id="refineError" class="text-red-400 text-sm hidden"></p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-8 text-gray-600 text-sm">
+    Built with ❤️ using FastAPI &amp; Google Gemini · FitBuddy © 2025
+  </footer>
+
+  <!-- ====== JAVASCRIPT ====== -->
+  <script>
+    let currentPlanId = null;
+    let currentGoal   = null;
+
+    // ── Intensity pill toggles ──────────────────────────────────────────────
+    document.querySelectorAll('.intensity-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.intensity-btn').forEach(b => {
+          b.classList.remove('border-primary', 'bg-primary/20', 'text-white');
+          b.classList.add('border-white/10');
+        });
+        btn.classList.add('border-primary', 'bg-primary/20', 'text-white');
+        btn.classList.remove('border-white/10');
+        btn.querySelector('input').checked = true;
+      });
+    });
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function setLoading(btnText, spinner, loading) {
+      document.getElementById(btnText).textContent = loading
+        ? (btnText === 'generateBtnText' ? 'Generating…' : 'Refining…')
+        : (btnText === 'generateBtnText' ? 'Generate My Plan ✨' : 'Refine 🔄');
+      document.getElementById(spinner).classList.toggle('hidden', !loading);
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+
+    // ── Render plan grid ────────────────────────────────────────────────────
+    function renderPlan(plan) {
+      const grid = document.getElementById('planGrid');
+      grid.innerHTML = '';
+      const colorPalette = [
+        'from-indigo-500/20 to-purple-500/10 border-indigo-500/30',
+        'from-emerald-500/20 to-teal-500/10 border-emerald-500/30',
+        'from-pink-500/20 to-rose-500/10 border-pink-500/30',
+        'from-amber-500/20 to-orange-500/10 border-amber-500/30',
+        'from-sky-500/20 to-blue-500/10 border-sky-500/30',
+        'from-violet-500/20 to-fuchsia-500/10 border-violet-500/30',
+        'from-lime-500/20 to-green-500/10 border-lime-500/30',
+      ];
+      let i = 0;
+      for (const [day, data] of Object.entries(plan)) {
+        const colors = colorPalette[i % colorPalette.length];
+        const exercises = (data.exercises || []).map(ex =>
+          `<li class="flex items-start gap-2 text-sm">
+            <span class="text-accent mt-0.5">▸</span>
+            <span><span class="font-medium text-white">${ex.name}</span>
+            &nbsp;—&nbsp;${ex.sets} sets × ${ex.reps}</span>
+           </li>`
+        ).join('');
+
+        grid.innerHTML += `
+          <div class="day-card bg-gradient-to-br ${colors} border rounded-2xl p-5 space-y-3 cursor-default">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase tracking-widest text-gray-400 font-semibold">${day}</span>
+              <span class="bg-white/10 text-xs px-2 py-0.5 rounded-full">${data.focus || 'Rest'}</span>
+            </div>
+            <ul class="space-y-1.5">${exercises || '<li class="text-sm text-gray-400">Rest day 🛌</li>'}</ul>
+          </div>`;
+        i++;
+      }
+    }
+
+    // ── Scenario 1 – Generate ───────────────────────────────────────────────
+    document.getElementById('generateForm').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const intensity = document.querySelector('input[name="intensity"]:checked');
+      if (!intensity) { showError('generateError', 'Please select an intensity level.'); return; }
+
+      const payload = {
+        name:      document.getElementById('f-name').value.trim(),
+        age:       parseInt(document.getElementById('f-age').value),
+        weight:    parseFloat(document.getElementById('f-weight').value),
+        goal:      document.getElementById('f-goal').value,
+        intensity: intensity.value,
+      };
+
+      currentGoal = payload.goal;
+      setLoading('generateBtnText', 'generateSpinner', true);
+
+      try {
+        const res  = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Unknown error');
+
+        currentPlanId = data.plan_id;
+        document.getElementById('planIdBadge').textContent = '#' + data.plan_id;
+
+        renderPlan(data.plan);
+        showTip(data.tip);
+
+        document.getElementById('planSection').classList.remove('hidden');
+        document.getElementById('planSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        showError('generateError', '⚠ ' + err.message);
+      } finally {
+        setLoading('generateBtnText', 'generateSpinner', false);
+      }
+    });
+
+    // ── Show tip banner ─────────────────────────────────────────────────────
+    function showTip(text) {
+      document.getElementById('tipText').textContent = text;
+      document.getElementById('tipBanner').classList.remove('hidden');
+    }
+
+    // ── Scenario 3 – Refresh tip ────────────────────────────────────────────
+    async function refreshTip() {
+      if (!currentGoal) return;
+      try {
+        const res  = await fetch(`/tip/${encodeURIComponent(currentGoal)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+        showTip(data.tip);
+      } catch (err) {
+        showTip('⚠ Could not fetch tip: ' + err.message);
+      }
+    }
+
+    // ── Scenario 2 – Refine ─────────────────────────────────────────────────
+    async function refinePlan() {
+      const feedback = document.getElementById('feedbackInput').value.trim();
+      if (!feedback) { showError('refineError', 'Please enter your feedback.'); return; }
+      if (!currentPlanId) { showError('refineError', 'No active plan found.'); return; }
+
+      setLoading('refineBtnText', 'refineSpinner', true);
+
+      try {
+        const res  = await fetch('/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan_id: currentPlanId, feedback }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Unknown error');
+
+        renderPlan(data.plan);
+        if (data.tip) showTip(data.tip);
+        document.getElementById('feedbackInput').value = '';
+        document.getElementById('planGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        showError('refineError', '⚠ ' + err.message);
+      } finally {
+        setLoading('refineBtnText', 'refineSpinner', false);
+      }
+    }
+
+    // Submit refine on Enter key
+    document.getElementById('feedbackInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') refinePlan();
+    });
+  </script>
+</body>
+</html>
