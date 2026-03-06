@@ -14,7 +14,6 @@ GET  /view-all-users    → all_users.html (admin dashboard)
 import json
 import os
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -85,7 +84,19 @@ async def generate_workout(
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
-    return RedirectResponse(url=f"/result/{plan.id}", status_code=303)
+    return templates.TemplateResponse("result.html", {
+        "request":       request,
+        "username":      username,
+        "age":           age,
+        "weight":        weight,
+        "goal":          goal,
+        "intensity":     intensity,
+        "user_id":       user_id,
+        "workout_plan":  plan_dict,
+        "nutrition_tip": tip,
+        "plan_id":       plan.id,
+        "is_updated":    False,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -104,13 +115,19 @@ async def result(request: Request, plan_id: int, db: Session = Depends(get_db)):
     except json.JSONDecodeError:
         active_plan = {}
 
+    u = plan.user
     return templates.TemplateResponse("result.html", {
-        "request":      request,
-        "plan":         active_plan,
-        "tip":          plan.nutrition_tip,
-        "plan_id":      plan.id,
-        "user":         plan.user,
-        "is_updated":   bool(plan.updated_plan),
+        "request":       request,
+        "username":      u.name      if u else "",
+        "age":           u.age       if u else "",
+        "weight":        u.weight    if u else "",
+        "goal":          u.goal      if u else "",
+        "intensity":     u.intensity if u else "",
+        "user_id":       u.user_id   if u else "",
+        "workout_plan":  active_plan,
+        "nutrition_tip": plan.nutrition_tip,
+        "plan_id":       plan.id,
+        "is_updated":    bool(plan.updated_plan),
     })
 
 
@@ -128,6 +145,7 @@ async def result(request: Request, plan_id: int, db: Session = Depends(get_db)):
                          "update_workout_plan() (Gemini 1.5 Pro), saves the updated plan, "
                          "then redirects to /result/{plan_id}.")
 async def submit_feedback(
+    request:  Request,
     plan_id:  int = Form(..., gt=0, description="ID of the plan to refine"),
     feedback: str = Form(..., min_length=1, description="User feedback for plan refinement"),
     db: Session = Depends(get_db),
@@ -148,7 +166,20 @@ async def submit_feedback(
     except (RuntimeError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
-    return RedirectResponse(url=f"/result/{plan_id}", status_code=303)
+    u = plan.user
+    return templates.TemplateResponse("result.html", {
+        "request":       request,
+        "username":      u.name      if u else "",
+        "age":           u.age       if u else "",
+        "weight":        u.weight    if u else "",
+        "goal":          u.goal      if u else "",
+        "intensity":     u.intensity if u else "",
+        "user_id":       u.user_id   if u else "",
+        "workout_plan":  updated_dict,
+        "nutrition_tip": plan.nutrition_tip,
+        "plan_id":       plan_id,
+        "is_updated":    True,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -156,28 +187,26 @@ async def submit_feedback(
 # ---------------------------------------------------------------------------
 @router.get("/view-all-users")
 async def view_all_users(request: Request, db: Session = Depends(get_db)):
-    users = get_all_users(db)
-    # Attach parsed plan data to each user for easy template rendering
-    users_data = []
-    for user in users:
-        user_plans = []
-        for p in user.plans:
-            active_json = p.updated_plan if p.updated_plan else p.original_plan
-            try:
-                plan_dict = json.loads(active_json)
-            except Exception:
-                plan_dict = {}
-            user_plans.append({
-                "id":         p.id,
-                "plan":       plan_dict,
-                "tip":        p.nutrition_tip,
-                "is_updated": bool(p.updated_plan),
-                "created_at": p.created_at,
-                "updated_at": p.updated_at,
-            })
-        users_data.append({"user": user, "plans": user_plans})
+    # Build a flat list of dicts — one row per user, latest plan's raw JSON attached
+    orm_users = get_all_users(db)
+    users = []
+    for u in orm_users:
+        latest = u.plans[-1] if u.plans else None
+        users.append({
+            "id":            u.id,
+            "name":          u.name,
+            "age":           u.age,
+            "weight":        u.weight,
+            "goal":          u.goal,
+            "intensity":     u.intensity,
+            "user_id":       u.user_id or "",
+            "original_plan": latest.original_plan if latest else "",
+            "updated_plan":  latest.updated_plan  if latest else "",
+            "nutrition_tip": latest.nutrition_tip if latest else "",
+            "plan_id":       latest.id            if latest else None,
+        })
 
     return templates.TemplateResponse("all_users.html", {
-        "request":    request,
-        "users_data": users_data,
+        "request": request,
+        "users":   users,
     })

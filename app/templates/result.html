@@ -1,204 +1,454 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FitBuddy – Your Plan</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>FitBuddy â€“ Your Plan</title>
+
+  <!-- Google Fonts â€“ Roboto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
   <style>
+    /* â”€â”€ RESET & BASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #1a1a2e 100%);
+      font-family: 'Roboto', sans-serif;
       min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #1a1a2e 100%);
+      color: #e2e8f0;
+      padding-bottom: 60px;
     }
-    .glass {
-      background: rgba(20, 20, 40, 0.75);
+
+    a { color: #818cf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(0,0,0,0.45);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 24px;
     }
-    .gradient-text {
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand {
+      font-size: 1.2rem;
+      font-weight: 900;
       background: linear-gradient(90deg, #818cf8, #34d399);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .day-colors { --c1: rgba(129,140,248,0.15); --c2: rgba(129,140,248,0.3); }
-    .day-card { transition: transform .2s, box-shadow .2s; }
-    .day-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
-    .input-field {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-updated { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-plan    { background: rgba(99,102,241,0.15); color: #818cf8;  border: 1px solid rgba(99,102,241,0.3); }
+
+    /* â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 36px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* â”€â”€ GLASS CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .glass {
+      background: rgba(20, 20, 40, 0.78);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+    }
+
+    /* â”€â”€ USER BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .user-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 28px;
+    }
+    .user-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.25);
+      border: 2px solid rgba(99,102,241,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 180px; }
+    .user-name  { font-size: 1.2rem; font-weight: 700; }
+    .user-meta  { font-size: 0.85rem; color: #94a3b8; margin-top: 2px; }
+    .user-meta .uid { color: #6b7280; font-family: monospace; }
+    .badge-goal {
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc;
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    /* â”€â”€ NUTRITION TIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .tip-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px 24px;
+      border: 1px solid rgba(16,185,129,0.25);
+      background: rgba(16,185,129,0.07);
+      border-radius: 16px;
+    }
+    .tip-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+    .tip-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #34d399;
+      margin-bottom: 5px;
+    }
+    .tip-text { font-size: 0.95rem; color: #d1fae5; line-height: 1.5; }
+
+    /* â”€â”€ SECTION HEADING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .section-heading {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-heading .updated-tag { color: #34d399; }
+
+    /* â”€â”€ DAY CARD GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    /* day card */
+    .day-card {
+      border: 1px solid;
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .day-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+
+    /* colour palette per day (0-indexed) */
+    .dc-0 { background: linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.1));  border-color: rgba(99,102,241,.35); }
+    .dc-1 { background: linear-gradient(135deg,rgba(16,185,129,.2),rgba(52,211,153,.1)); border-color: rgba(16,185,129,.35); }
+    .dc-2 { background: linear-gradient(135deg,rgba(245,158,11,.2),rgba(251,191,36,.1));  border-color: rgba(245,158,11,.35); }
+    .dc-3 { background: linear-gradient(135deg,rgba(239,68,68,.2),rgba(252,165,165,.1));  border-color: rgba(239,68,68,.35); }
+    .dc-4 { background: linear-gradient(135deg,rgba(14,165,233,.2),rgba(56,189,248,.1));  border-color: rgba(14,165,233,.35); }
+    .dc-5 { background: linear-gradient(135deg,rgba(217,70,239,.2),rgba(232,121,249,.1)); border-color: rgba(217,70,239,.35); }
+    .dc-6 { background: linear-gradient(135deg,rgba(132,204,22,.2),rgba(163,230,53,.1));  border-color: rgba(132,204,22,.35); }
+
+    .day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .day-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+    }
+    .day-focus {
+      font-size: 0.72rem;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 10px;
+      border-radius: 999px;
+      color: #e2e8f0;
+    }
+
+    /* sub-section within a day card */
+    .sub-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+    .sub-label.warmup   { color: #fbbf24; }
+    .sub-label.exercise { color: #a5b4fc; }
+    .sub-label.cooldown { color: #60a5fa; }
+    .sub-text { font-size: 0.82rem; color: #cbd5e1; line-height: 1.45; }
+
+    .exercise-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .exercise-item { display: flex; align-items: flex-start; gap: 7px; font-size: 0.85rem; }
+    .exercise-bullet { color: #34d399; flex-shrink: 0; margin-top: 2px; }
+    .exercise-name  { color: #f1f5f9; font-weight: 500; }
+    .exercise-detail { color: #64748b; }
+
+    .cooldown-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); }
+    .rest-day { font-size: 0.9rem; color: #64748b; font-style: italic; }
+
+    /* â”€â”€ FEEDBACK SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .feedback-card { padding: 30px; }
+    .feedback-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+    .feedback-sub   { font-size: 0.875rem; color: #64748b; margin-bottom: 20px; }
+    .feedback-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .feedback-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 11px 16px;
+      background: rgba(255,255,255,0.045);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: .75rem;
-      padding: .6rem 1rem;
+      border-radius: 12px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.95rem;
       color: #e2e8f0;
       outline: none;
-      transition: border-color .2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .input-field:focus { border-color: #818cf8; }
+    .feedback-input::placeholder { color: #4b5563; }
+    .feedback-input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+    }
+    .btn-refine {
+      padding: 11px 26px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 4px 18px rgba(16,185,129,0.3);
+    }
+    .btn-refine:hover { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); }
+    .btn-refine:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .feedback-hint { font-size: 0.82rem; color: #374151; margin-top: 14px; }
+
+    /* spinner */
     .spinner {
-      width:18px; height:18px;
-      border: 2px solid rgba(255,255,255,.2);
-      border-top-color: #34d399;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
       border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: inline-block;
+      animation: spin 0.7s linear infinite;
+      display: none;
     }
+    .spinner.visible { display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Day card gradient palette */
-    .day-0 { background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(139,92,246,.1)); border-color: rgba(99,102,241,.35); }
-    .day-1 { background: linear-gradient(135deg, rgba(16,185,129,.2), rgba(52,211,153,.1)); border-color: rgba(16,185,129,.35); }
-    .day-2 { background: linear-gradient(135deg, rgba(245,158,11,.2), rgba(251,191,36,.1)); border-color: rgba(245,158,11,.35); }
-    .day-3 { background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(252,165,165,.1)); border-color: rgba(239,68,68,.35); }
-    .day-4 { background: linear-gradient(135deg, rgba(14,165,233,.2), rgba(56,189,248,.1)); border-color: rgba(14,165,233,.35); }
-    .day-5 { background: linear-gradient(135deg, rgba(217,70,239,.2), rgba(232,121,249,.1)); border-color: rgba(217,70,239,.35); }
-    .day-6 { background: linear-gradient(135deg, rgba(132,204,22,.2), rgba(163,230,53,.1)); border-color: rgba(132,204,22,.35); }
+    /* â”€â”€ BACK LINK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .back-link { text-align: center; font-size: 0.9rem; }
+
+    /* â”€â”€ RESPONSIVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 600px) {
+      main { padding: 24px 14px; gap: 22px; }
+      .user-banner { padding: 16px; gap: 12px; }
+      .badge-goal { margin-left: 0; }
+      .plan-grid { grid-template-columns: 1fr; }
+      .feedback-row { flex-direction: column; }
+      .btn-refine { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
-<body class="text-gray-100 font-sans pb-20">
+<body>
 
-  <!-- ── HEADER ── -->
-  <header class="sticky top-0 z-50 backdrop-blur bg-black/40 border-b border-white/10 px-6 py-4">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2 font-bold text-lg gradient-text">
-        💪 FitBuddy
-      </a>
-      <div class="flex items-center gap-4 text-sm text-gray-400">
+  <!-- â”€â”€ HEADER â”€â”€ -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="brand">&#x1F4AA; FitBuddy</a>
+      <div class="header-meta">
         {% if is_updated %}
-          <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-semibold">✓ Plan Updated</span>
+          <span class="badge badge-updated">&#x2713; Plan Updated</span>
         {% endif %}
-        <span>Plan <span class="font-mono text-indigo-400">#{{ plan_id }}</span></span>
-        <a href="/view-all-users" class="text-indigo-400 hover:underline">Admin →</a>
+        <span class="badge badge-plan">Plan #{{ plan_id }}</span>
+        <a href="/view-all-users">Admin &rarr;</a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+  <main>
 
-    <!-- ── USER BANNER ── -->
-    <div class="glass rounded-2xl px-6 py-5 flex flex-wrap gap-6 items-center">
-      <div class="w-14 h-14 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-2xl">
-        🏋️
+    <!-- â”€â”€ USER BANNER â”€â”€ -->
+    <section class="glass user-banner" aria-label="User profile">
+      <div class="user-avatar" aria-hidden="true">&#x1F3CB;</div>
+      <div class="user-info">
+        <p class="user-name">{{ username }}</p>
+        <p class="user-meta">
+          {{ age }} yrs &middot; {{ weight }} kg &middot;
+          <span style="text-transform:capitalize">{{ intensity }}</span> intensity
+          {% if user_id %}
+            &middot; <span class="uid">{{ user_id }}</span>
+          {% endif %}
+        </p>
       </div>
-      <div>
-        <p class="text-xl font-bold">{{ user.name }}</p>
-        <p class="text-sm text-gray-400">{{ user.age }} yrs · {{ user.weight }} kg · <span class="capitalize">{{ user.intensity }}</span> intensity</p>
-      </div>
-      <div class="ml-auto">
-        <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-sm font-semibold">
-          🎯 {{ user.goal }}
-        </span>
-      </div>
-    </div>
+      <div class="badge-goal">&#x1F3AF; {{ goal }}</div>
+    </section>
 
-    <!-- ── NUTRITION TIP ── -->
-    {% if tip %}
-    <div class="glass rounded-2xl px-6 py-4 flex items-start gap-4 border border-emerald-500/20">
-      <span class="text-2xl mt-0.5">🥗</span>
+    <!-- â”€â”€ NUTRITION / RECOVERY TIP â”€â”€ -->
+    {% if nutrition_tip %}
+    <div class="tip-card" role="complementary" aria-label="Nutrition tip">
+      <span class="tip-icon" aria-hidden="true">&#x1F957;</span>
       <div>
-        <p class="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-1">Nutrition &amp; Recovery Tip</p>
-        <p class="text-gray-200">{{ tip }}</p>
+        <p class="tip-label">Nutrition &amp; Recovery Tip</p>
+        <p class="tip-text">{{ nutrition_tip }}</p>
       </div>
     </div>
     {% endif %}
 
-    <!-- ── 7-DAY PLAN GRID ── -->
-    <section>
-      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        📅 Your
-        {% if is_updated %}<span class="text-emerald-400">Updated</span>{% endif %}
+    <!-- â”€â”€ 7-DAY WORKOUT PLAN â”€â”€ -->
+    <section aria-label="7-day workout plan">
+      <h2 class="section-heading">
+        &#x1F4C5; Your
+        {% if is_updated %}<span class="updated-tag">Updated</span>{% endif %}
         7-Day Plan
       </h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {% set colors = ['day-0','day-1','day-2','day-3','day-4','day-5','day-6'] %}
-        {% for day, details in plan.items() %}
-        <div class="day-card border rounded-2xl p-5 space-y-4 {{ colors[loop.index0 % 7] }}">
+      {% set dc = ['dc-0','dc-1','dc-2','dc-3','dc-4','dc-5','dc-6'] %}
+      <div class="plan-grid">
+        {% for day, details in workout_plan.items() %}
+        <article class="day-card {{ dc[loop.index0 % 7] }}" aria-label="{{ day }}">
 
-          <!-- Day header -->
-          <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-widest text-gray-400 font-semibold">{{ day }}</span>
-            <span class="text-xs bg-white/10 px-2.5 py-0.5 rounded-full">{{ details.focus | default('Rest') }}</span>
+          <!-- Day header block -->
+          <div class="day-header">
+            <span class="day-label">{{ day }}</span>
+            <span class="day-focus">{{ details.focus | default('Rest') }}</span>
           </div>
 
-          <!-- Warm-up -->
+          <!-- Warm-up block -->
           {% if details.warmup %}
           <div>
-            <p class="text-xs text-yellow-400 font-semibold uppercase tracking-wide mb-1">🔆 Warm-up</p>
-            <p class="text-xs text-gray-300">{{ details.warmup }}</p>
+            <p class="sub-label warmup">&#x1F31E; Warm-up (5&ndash;10 min)</p>
+            <p class="sub-text">{{ details.warmup }}</p>
           </div>
           {% endif %}
 
-          <!-- Exercises -->
+          <!-- Main workout block -->
           {% if details.exercises %}
           <div>
-            <p class="text-xs text-indigo-300 font-semibold uppercase tracking-wide mb-2">💪 Exercises</p>
-            <ul class="space-y-1.5">
+            <p class="sub-label exercise">&#x1F4AA; Exercises</p>
+            <ul class="exercise-list">
               {% for ex in details.exercises %}
-              <li class="flex items-start gap-2 text-sm">
-                <span class="text-emerald-400 mt-0.5 shrink-0">▸</span>
+              <li class="exercise-item">
+                <span class="exercise-bullet" aria-hidden="true">&#x25B8;</span>
                 <span>
-                  <span class="font-medium text-white">{{ ex.name }}</span>
-                  <span class="text-gray-400"> — {{ ex.sets }} × {{ ex.reps }}</span>
+                  <span class="exercise-name">{{ ex.name }}</span>
+                  <span class="exercise-detail"> &mdash; {{ ex.sets }} sets &times; {{ ex.reps }}</span>
                 </span>
               </li>
               {% endfor %}
             </ul>
           </div>
           {% else %}
-          <p class="text-sm text-gray-400 italic">Rest day 🛌</p>
+          <p class="rest-day">Rest day &#x1F6CC;</p>
           {% endif %}
 
-          <!-- Cooldown -->
+          <!-- Cooldown / recovery block -->
           {% if details.cooldown %}
-          <div class="border-t border-white/10 pt-3">
-            <p class="text-xs text-blue-400 font-semibold uppercase tracking-wide mb-1">❄️ Cooldown</p>
-            <p class="text-xs text-gray-300">{{ details.cooldown }}</p>
+          <div>
+            <hr class="cooldown-divider" />
+            <p class="sub-label cooldown" style="margin-top:12px;">&#x2744;&#xFE0F; Cooldown</p>
+            <p class="sub-text">{{ details.cooldown }}</p>
           </div>
           {% endif %}
 
-        </div>
+        </article>
         {% endfor %}
       </div>
     </section>
 
-    <!-- ── FEEDBACK / REFINE ── -->
-    <section class="glass rounded-2xl p-8 space-y-5 border border-white/10">
-      <div>
-        <h3 class="text-xl font-bold flex items-center gap-2">✏️ Refine Your Plan</h3>
-        <p class="text-sm text-gray-400 mt-1">Not happy with something? Tell FitBuddy and it will update your plan.</p>
-      </div>
+    <!-- â”€â”€ FEEDBACK / REFINE PLAN â”€â”€ -->
+    <section class="glass feedback-card" aria-label="Refine your plan">
+      <h3 class="feedback-title">&#x270F;&#xFE0F; Refine Your Plan</h3>
+      <p class="feedback-sub">
+        Not happy with something? Describe the change and FitBuddy will update your plan.
+      </p>
 
-      <form action="/submit-feedback" method="post" id="feedbackForm" class="space-y-4">
+      <form action="/submit-feedback" method="post" id="feedbackForm">
         <input type="hidden" name="plan_id" value="{{ plan_id }}" />
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input name="feedback" type="text" required
+        <div class="feedback-row">
+          <input
+            class="feedback-input"
+            name="feedback"
+            type="text"
+            required
             placeholder='e.g. "Add yoga on Day 3", "Too hard, reduce intensity"'
-            class="input-field flex-1" />
-          <button type="submit" id="refineBtn"
-            class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2.5
-                   rounded-xl transition flex items-center justify-center gap-2 whitespace-nowrap">
-            <span id="refineBtnLabel">Refine Plan 🔄</span>
-            <span id="refineSpinner" class="spinner hidden"></span>
+            aria-label="Your feedback"
+          />
+          <button type="submit" class="btn-refine" id="refineBtn">
+            <span id="refineBtnLabel">Refine Plan &#x1F504;</span>
+            <span class="spinner" id="refineSpinner" aria-hidden="true"></span>
           </button>
         </div>
       </form>
 
-      <p class="text-sm text-gray-500">
-        💡 Tip: You can chain multiple requests — each refinement builds on the previous one.
+      <p class="feedback-hint">
+        &#x1F4A1; Each refinement builds on the previous version of your plan.
       </p>
     </section>
 
-    <!-- ── BACK LINK ── -->
-    <div class="text-center">
-      <a href="/" class="text-indigo-400 hover:underline text-sm">← Create a new plan</a>
+    <!-- â”€â”€ BACK LINK â”€â”€ -->
+    <div class="back-link">
+      <a href="/">&larr; Create a new plan</a>
     </div>
 
   </main>
 
   <script>
-    document.getElementById('feedbackForm').addEventListener('submit', function () {
-      document.getElementById('refineBtnLabel').textContent = 'Refining…';
-      document.getElementById('refineSpinner').classList.remove('hidden');
+    document.getElementById('feedbackForm').addEventListener('submit', function() {
+      document.getElementById('refineBtnLabel').textContent = 'Refining\u2026';
+      document.getElementById('refineSpinner').classList.add('visible');
       document.getElementById('refineBtn').disabled = true;
     });
   </script>

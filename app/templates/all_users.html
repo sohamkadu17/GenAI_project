@@ -1,186 +1,319 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FitBuddy – Admin Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>FitBuddy â€“ Admin Dashboard</title>
+
+  <!-- Google Fonts â€“ Roboto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
   <style>
-    body { background: #0f0f1e; min-height: 100vh; }
-    .glass {
-      background: rgba(20, 20, 40, 0.80);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
+    /* â”€â”€ RESET & BASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
+      background: #0d0d1a;
+      color: #e2e8f0;
+      padding-bottom: 60px;
     }
-    .gradient-text {
+
+    a { color: #818cf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 28px;
+    }
+    .header-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .brand {
+      font-size: 1.2rem; font-weight: 900;
       background: linear-gradient(90deg, #818cf8, #34d399);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    details > summary { list-style: none; }
-    details > summary::-webkit-details-marker { display: none; }
-    details[open] summary .arrow { transform: rotate(90deg); }
-    .arrow { transition: transform .2s; display: inline-block; }
+    .header-actions { display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: #64748b; }
+
+    /* â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    main { max-width: 1280px; margin: 0 auto; padding: 36px 24px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* â”€â”€ PAGE TITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .page-title {
+      font-size: 2rem; font-weight: 900;
+      background: linear-gradient(90deg, #818cf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-sub { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+
+    /* â”€â”€ EMPTY STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .empty-state {
+      background: rgba(20,20,40,0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 60px 24px;
+      text-align: center;
+      color: #4b5563;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+    /* â”€â”€ USER CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .user-card {
+      background: rgba(20,20,40,0.78);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    /* user card header */
+    .uc-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 24px;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .uc-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(99,102,241,0.25);
+      border: 2px solid rgba(99,102,241,0.35);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 700; color: #a5b4fc;
+      flex-shrink: 0;
+    }
+    .uc-info { flex: 1; min-width: 160px; }
+    .uc-name { font-size: 1.05rem; font-weight: 700; }
+    .uc-meta { font-size: 0.82rem; color: #94a3b8; margin-top: 2px; }
+    .uc-meta .uid { color: #4b5563; font-family: monospace; }
+    .uc-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 12px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .badge-id    { background: rgba(255,255,255,0.05); color: #6b7280; border: 1px solid rgba(255,255,255,0.08); font-family: monospace; }
+    .badge-plans { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+    .badge-date  { font-size: 0.75rem; color: #64748b; }
+
+    /* â”€â”€ PLAN ACCORDION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    details { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    details:last-child { border-bottom: none; }
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      transition: background 0.15s;
+      flex-wrap: wrap;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover { background: rgba(255,255,255,0.04); }
+
+    .arrow {
+      font-size: 0.7rem; color: #4b5563;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    details[open] .arrow { transform: rotate(90deg); }
+
+    .plan-title { font-size: 0.92rem; font-weight: 500; color: #e2e8f0; }
+    .badge-updated { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-original{ background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+
+    .summary-right { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; }
+    .plan-date { font-size: 0.75rem; color: #64748b; font-family: monospace; }
+    .btn-view {
+      font-size: 0.78rem; color: #818cf8;
+      padding: 4px 12px;
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px;
+      background: rgba(99,102,241,0.1);
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .btn-view:hover { background: rgba(99,102,241,0.25); text-decoration: none; }
+
+    /* plan detail body */
+    .plan-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* tip banner inside plan */
+    .tip-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .tip-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #34d399; margin-bottom: 3px; }
+    .tip-text  { font-size: 0.88rem; color: #bbf7d0; }
+
+    /* original vs updated toggle tabs */
+    .plan-tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+    .tab {
+      padding: 5px 16px;
+      border-radius: 999px;
+      font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: #94a3b8;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab.active {
+      background: rgba(99,102,241,0.2);
+      border-color: rgba(99,102,241,0.4);
+      color: #c7d2fe;
+    }
+
+    /* plan table */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    thead tr { background: rgba(255,255,255,0.05); }
+    th {
+      text-align: left; padding: 10px 14px;
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #64748b; white-space: nowrap;
+    }
+    tbody tr { border-top: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+    td { padding: 10px 14px; vertical-align: top; }
+    .td-day  { font-weight: 700; color: #818cf8; white-space: nowrap; }
+    .td-focus span {
+      background: rgba(255,255,255,0.08); padding: 2px 10px;
+      border-radius: 999px; font-size: 0.78rem;
+    }
+    .td-text { color: #94a3b8; font-size: 0.8rem; max-width: 180px; }
+    .ex-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    .ex-list li { font-size: 0.8rem; }
+    .ex-name { color: #f1f5f9; font-weight: 500; }
+    .ex-detail { color: #64748b; }
+    .rest-tag { color: #4b5563; font-style: italic; font-size: 0.8rem; }
+
+    /* â”€â”€ RESPONSIVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 640px) {
+      main { padding: 20px 12px; }
+      .uc-header { padding: 14px 16px; }
+      summary { padding: 12px 16px; }
+      .plan-body { padding: 16px; }
+      .summary-right { margin-left: 0; width: 100%; }
+    }
   </style>
 </head>
-<body class="text-gray-100 font-sans pb-20">
+<body>
 
-  <!-- ── HEADER ── -->
-  <header class="sticky top-0 z-50 backdrop-blur bg-black/50 border-b border-white/10 px-6 py-4">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2 font-bold text-lg gradient-text">
-        💪 FitBuddy
-      </a>
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-400">🔐 Admin Dashboard</span>
-        <a href="/" class="text-sm text-indigo-400 hover:underline">← New Plan</a>
+  <!-- â”€â”€ HEADER â”€â”€ -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="brand">&#x1F4AA; FitBuddy</a>
+      <div class="header-actions">
+        <span>&#x1F510; Admin Dashboard</span>
+        <a href="/">&larr; New Plan</a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-10 space-y-8">
+  <main role="main">
 
-    <!-- ── PAGE TITLE ── -->
-    <div class="flex items-center gap-4">
-      <div>
-        <h1 class="text-3xl font-extrabold gradient-text">All Users</h1>
-        <p class="text-gray-400 mt-1">
-          {{ users_data | length }} registered user{{ 's' if users_data | length != 1 else '' }}
-        </p>
-      </div>
+    <!-- PAGE TITLE -->
+    <div>
+      <h1 class="page-title">All Users</h1>
+      <p class="page-sub">
+        {{ users | length }} registered user{{ 's' if users | length != 1 else '' }}
+      </p>
     </div>
 
-    {% if not users_data %}
-      <div class="glass rounded-2xl p-10 text-center text-gray-500">
-        <p class="text-4xl mb-3">🏋️</p>
-        <p class="text-lg">No users yet. <a href="/" class="text-indigo-400 hover:underline">Create the first plan →</a></p>
-      </div>
+    <!-- EMPTY STATE -->
+    {% if not users %}
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">&#x1F3CB;</div>
+      <p>No users yet. <a href="/">Create the first plan &rarr;</a></p>
+    </div>
     {% endif %}
 
-    {% for entry in users_data %}
-    {% set user = entry.user %}
-    <div class="glass rounded-2xl overflow-hidden">
-
-      <!-- User header row -->
-      <div class="flex flex-wrap items-center gap-4 px-6 py-5 bg-white/5 border-b border-white/10">
-        <div class="w-12 h-12 rounded-full bg-indigo-600/30 border border-indigo-500/30
-                    flex items-center justify-center text-xl font-bold text-indigo-300">
-          {{ user.name[0] | upper }}
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="font-bold text-lg text-white truncate">{{ user.name }}</p>
-          <p class="text-sm text-gray-400">
-            {{ user.age }} yrs · {{ user.weight }} kg ·
-            <span class="capitalize">{{ user.intensity }}</span> intensity ·
-            🎯 {{ user.goal }}
-          </p>
-        </div>
-        <div class="flex items-center gap-3 shrink-0">
-          <span class="text-xs text-gray-500 font-mono">ID #{{ user.id }}</span>
-          <span class="text-xs text-gray-500">
-            Joined {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
-          </span>
-          <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300
-                       px-3 py-1 rounded-full text-xs font-semibold">
-            {{ entry.plans | length }} Plan{{ 's' if entry.plans | length != 1 else '' }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Plans for this user -->
-      {% if not entry.plans %}
-        <p class="px-6 py-4 text-sm text-gray-500 italic">No plans generated.</p>
-      {% endif %}
-
-      {% for plan_entry in entry.plans %}
-      <details class="border-b border-white/5 last:border-0">
-        <summary class="flex items-center gap-3 px-6 py-4 cursor-pointer hover:bg-white/5 transition select-none">
-          <span class="arrow text-gray-500 text-xs">▶</span>
-          <span class="font-medium text-gray-200">Plan #{{ plan_entry.id }}</span>
-          {% if plan_entry.is_updated %}
-            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
-                         px-2.5 py-0.5 rounded-full text-xs font-semibold">Updated</span>
-          {% else %}
-            <span class="bg-gray-500/20 text-gray-400 border border-gray-500/30
-                         px-2.5 py-0.5 rounded-full text-xs">Original</span>
-          {% endif %}
-          <span class="ml-auto text-xs text-gray-500 font-mono">
-            {{ plan_entry.created_at.strftime('%d %b %Y, %H:%M') if plan_entry.created_at else '' }}
-          </span>
-          <a href="/result/{{ plan_entry.id }}"
-             class="text-indigo-400 hover:underline text-xs ml-4 whitespace-nowrap"
-             onclick="event.stopPropagation()">
-            View full plan →
-          </a>
-        </summary>
-
-        <div class="px-6 pb-6 space-y-5">
-
-          <!-- Nutrition tip -->
-          {% if plan_entry.tip %}
-          <div class="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20
-                      rounded-xl px-4 py-3 mt-3">
-            <span>🥗</span>
-            <div>
-              <p class="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-0.5">Nutrition Tip</p>
-              <p class="text-sm text-gray-300">{{ plan_entry.tip }}</p>
-            </div>
-          </div>
-          {% endif %}
-
-          <!-- Plan table -->
-          <div class="overflow-x-auto rounded-xl border border-white/10">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-white/5 text-gray-400 text-xs uppercase tracking-wide">
-                  <th class="text-left px-4 py-3 whitespace-nowrap">Day</th>
-                  <th class="text-left px-4 py-3 whitespace-nowrap">Focus</th>
-                  <th class="text-left px-4 py-3">Warm-up</th>
-                  <th class="text-left px-4 py-3">Exercises</th>
-                  <th class="text-left px-4 py-3">Cooldown</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-white/5">
-                {% for day, details in plan_entry.plan.items() %}
-                <tr class="hover:bg-white/5 transition">
-                  <td class="px-4 py-3 font-semibold text-indigo-300 whitespace-nowrap">{{ day }}</td>
-                  <td class="px-4 py-3 whitespace-nowrap">
-                    <span class="bg-white/10 px-2.5 py-0.5 rounded-full text-xs">
-                      {{ details.focus | default('—') }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-400 text-xs max-w-[160px]">
-                    {{ details.warmup | default('—') }}
-                  </td>
-                  <td class="px-4 py-3">
-                    {% if details.exercises %}
-                    <ul class="space-y-0.5">
-                      {% for ex in details.exercises %}
-                      <li class="text-xs">
-                        <span class="text-white font-medium">{{ ex.name }}</span>
-                        <span class="text-gray-500"> · {{ ex.sets }}×{{ ex.reps }}</span>
-                      </li>
-                      {% endfor %}
-                    </ul>
-                    {% else %}
-                    <span class="text-gray-500 text-xs italic">Rest day</span>
-                    {% endif %}
-                  </td>
-                  <td class="px-4 py-3 text-gray-400 text-xs max-w-[160px]">
-                    {{ details.cooldown | default('—') }}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      </details>
-      {% endfor %}
-
+    <!-- USERS TABLE -->
+    {% if users %}
+    <div class="table-wrap">
+      <table aria-label="All registered users">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Weight (kg)</th>
+            <th>Goal</th>
+            <th>Intensity</th>
+            <th>Original Plan</th>
+            <th>Updated Plan</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td class="td-day">{{ user.id }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="uc-avatar" style="width:32px;height:32px;font-size:0.85rem;flex-shrink:0;">{{ user.name[0] | upper }}</div>
+                <div>
+                  <div style="font-weight:600;color:#f1f5f9;">{{ user.name }}</div>
+                  {% if user.user_id %}<div style="font-size:0.75rem;color:#4b5563;font-family:monospace;">{{ user.user_id }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td>{{ user.age }}</td>
+            <td>{{ user.weight }}</td>
+            <td class="td-focus"><span>{{ user.goal }}</span></td>
+            <td style="text-transform:capitalize;">{{ user.intensity }}</td>
+            <td>
+              {% if user.original_plan %}
+              <details>
+                <summary style="cursor:pointer;font-size:0.78rem;color:#818cf8;list-style:none;">View JSON &#x25BC;</summary>
+                <pre style="margin-top:8px;font-size:0.72rem;color:#94a3b8;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;">{{ user.original_plan }}</pre>
+              </details>
+              {% else %}<span class="rest-tag">None</span>{% endif %}
+            </td>
+            <td>
+              {% if user.updated_plan %}
+              <details>
+                <summary style="cursor:pointer;font-size:0.78rem;color:#34d399;list-style:none;">View JSON &#x25BC;</summary>
+                <pre style="margin-top:8px;font-size:0.72rem;color:#94a3b8;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;">{{ user.updated_plan }}</pre>
+              </details>
+              {% else %}<span class="rest-tag">None</span>{% endif %}
+            </td>
+            <td>
+              {% if user.plan_id %}
+              <a href="/result/{{ user.plan_id }}" class="btn-view">View plan</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endfor %}
+    {% endif %}
 
   </main>
 </body>
